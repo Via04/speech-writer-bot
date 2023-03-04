@@ -5,15 +5,15 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/via04/speech-writer/internal/config"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+var secret string
+
 func main() {
-	bot, err := tgbotapi.NewBotAPI(config.Secret())
+	bot, err := tgbotapi.NewBotAPI(secret)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "tgbotapi: cannot init bot")
+		panic("nil: no bot")
 	}
 	bot.Debug = true
 	fmt.Fprintf(os.Stdout, "Authorized on account %s", bot.Self.UserName)
