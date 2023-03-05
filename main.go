@@ -8,10 +8,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var secret string
-
 func main() {
-	bot, err := tgbotapi.NewBotAPI(secret)
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("TOKEN"))
 	if err != nil {
 		panic("nil: no bot")
 	}
