@@ -103,6 +103,7 @@ func main() {
 				download(ctxTimeout, fullNamein, url)
 				// convert file to work with witai to wav format
 				conv, err := converter.New(fname, fnameoutWExt+".wav")
+				defer conv.Purge(true)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err.Error())
 				}
