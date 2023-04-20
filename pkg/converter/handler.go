@@ -3,10 +3,16 @@ package converter
 // uses ffmpeg to convert audio from * to wav. Of course required to have ffmpeg to be installed in path
 
 import (
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/via04/speech-writer-bot/pkg/utils"
+	wav "github.com/youpy/go-wav"
 )
 
 type converter struct {
@@ -70,4 +76,46 @@ func (c converter) Purge(deleteAll bool) {
 	if deleteAll {
 		os.Remove(c.path + c.sep + c.fileout)
 	}
+}
+
+func (c converter) SplitWavAt(duration uint32) ([]string, error) {
+    var outWavs []string
+    timeInSecs := duration / uint32(time.Second)
+    baseFile, err := os.Open(c.path+c.sep+c.fileout)
+    if err != nil {
+        return []string{}, err
+    }
+    decoder := wav.NewReader(baseFile)
+    info, err := decoder.Format()
+    if err != nil {
+        return []string{}, err
+    }
+    baseName, err := utils.GetNameNoExt(c.fileout)
+    if err != nil {
+        return []string{}, err
+    }
+    var curFile *os.File
+    var curEncoder *wav.Writer
+    for i, j := uint32(0), int(0); ; i++ {
+        samples, err := decoder.ReadSamples()
+        if err == io.EOF {
+            break
+        }
+        if i%timeInSecs*info.SampleRate == 0 {
+            filename := c.path+c.sep+baseName+"_"+strconv.Itoa(j)+filepath.Ext(c.fileout)
+            outWavs = append(outWavs, filename)
+            curFile, err = os.Create(filename)
+            if err != nil {
+                return []string{}, nil
+            }
+            curEncoder = wav.NewWriter(curFile, timeInSecs*info.SampleRate, info.NumChannels, info.SampleRate,
+                info.BitsPerSample)
+            j++
+        }
+        err = curEncoder.WriteSamples(samples)
+        if err != nil {
+            return []string{}, nil
+        }
+    }
+    return outWavs, nil
 }
